@@ -109,6 +109,18 @@ else
   done <<<"$urls"
 fi
 
+echo "== homepage bookmarks schema"
+if [ -f homepage/bookmarks.yaml ]; then
+  # Homepage requires each bookmark to be a mapping with `href`. A bare
+  # "- https://…" entry renders "URL constructor: undefined is not a valid URL".
+  if grep -nE '^[[:space:]]+-[[:space:]]+https?://' homepage/bookmarks.yaml >/dev/null 2>&1; then
+    bad "bookmarks.yaml has bare URL entries (need '- abbr: XX' + 'href: …'):"
+    grep -nE '^[[:space:]]+-[[:space:]]+https?://' homepage/bookmarks.yaml | sed 's/^/        /'
+  else
+    ok "every bookmark uses the href object form"
+  fi
+fi
+
 echo "== loopback ports"
 for p in 2586 3000 3001 5230 5232 8080 8081 8090 9090 45876; do
   if command -v ss >/dev/null 2>&1 && ss -ltn "sport = :$p" 2>/dev/null | grep -q LISTEN; then

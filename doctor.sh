@@ -75,6 +75,18 @@ else
   done <<<"$urls"
 fi
 
+echo "== homepage bookmarks schema"
+if [ -f homepage/bookmarks.yaml ]; then
+  # Homepage requires each bookmark to be a mapping with `href`. A bare
+  # "- https://…" entry renders "URL constructor: undefined is not a valid URL".
+  if grep -nE '^[[:space:]]+-[[:space:]]+https?://' homepage/bookmarks.yaml >/dev/null 2>&1; then
+    bad "bookmarks.yaml has bare URL entries (need '- abbr: XX' + 'href: …'):"
+    grep -nE '^[[:space:]]+-[[:space:]]+https?://' homepage/bookmarks.yaml | sed 's/^/        /'
+  else
+    ok "every bookmark uses the href object form"
+  fi
+fi
+
 echo "== homepage docker wiring (this is what makes status dots work)"
 if [ -f homepage/docker.yaml ] && [ -f homepage/services.yaml ]; then
   keys=$(grep -oE '^[A-Za-z0-9_-]+:' homepage/docker.yaml | tr -d ':' | sort -u)

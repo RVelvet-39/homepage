@@ -1,10 +1,28 @@
+# Every bookmark MUST be a mapping with an `href` key. A bare `- https://…` line
+# makes Homepage render "component error: TypeError: URL constructor: undefined is
+# not a valid URL" for the whole group.
+# __HOST__ is substituted by ./start.sh from TAILNET_HOST in .env.
+
 - Docs:
     - Homepage:
-        - https://gethomepage.dev
+        - abbr: HP
+          href: https://gethomepage.dev
+          description: dashboard docs
     - ntfy:
-        - https://docs.ntfy.sh
+        - abbr: NT
+          href: https://docs.ntfy.sh
+          description: push notification docs
+
 - Ops:
-    - Uptime:
-        - https://__HOST__:8450
-    - Serve rules:
-        - https://__HOST__:8449
+    - Uptime Kuma:
+        - abbr: UK
+          href: https://__HOST__:8450
+          description: monitors and cert expiry
+    - Beszel:
+        - abbr: BZ
+          href: https://__HOST__:8449
+          description: host metrics and disk health
+    - ntfy:
+        - abbr: NF
+          href: https://__HOST__:8448
+          description: notification bus
