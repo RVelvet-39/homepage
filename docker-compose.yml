@@ -114,6 +114,8 @@ services:
       # KEY is the hub's public key and it is mandatory: without it the agent
       # exits immediately with "Failed to load public keys". Copy it from
       # Beszel -> Add System. TOKEN enables WebSocket auto-registration.
+      # These read .env, so after editing them you must RECREATE, not restart:
+      #   docker compose up -d --force-recreate beszel-agent
       KEY: ${BESZEL_KEY:-}
       TOKEN: ${BESZEL_TOKEN:-}
       TZ: ${TZ:-UTC}
@@ -195,6 +197,8 @@ services:
     <<: [*base, *net]
     image: tomsquest/docker-radicale:3.9.0.0
     container_name: radicale
+    # config and users are bind-mounted, so `restart` picks up edits to them.
+    # Only a change in .env or in this file needs --force-recreate.
     ports:
       - "127.0.0.1:5232:5232"
     environment:

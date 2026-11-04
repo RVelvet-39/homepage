@@ -139,6 +139,32 @@ Fallback if you prefer not to use serve: bind ports to the tailnet IP instead
 (`tailscale ip -4` → `100.x.y.z:PORT:PORT`) and open `http://100.x.y.z:PORT`.
 Uglier URLs, no certs, same isolation.
 
+## 1b. Applying a change
+
+`restart` keeps the container and its environment; `recreate` builds a new one from the
+current compose file and `.env`. Getting that wrong is why `BESZEL_KEY` and Radicale
+passwords look like they "didn't take" — the old container is still running with the old
+environment.
+
+```sh
+docker compose restart radicale                      # re-reads radicale/config + users
+docker compose up -d --force-recreate beszel-agent   # REQUIRED after editing .env
+docker compose up -d --force-recreate radicale       # REQUIRED after editing .env
+docker compose up -d                                 # enough when only the compose file changed
+```
+
+| You changed | Command |
+|---|---|
+| `.env` value used by a service (`BESZEL_KEY`, `BESZEL_TOKEN`, `LINKDING_*`, `MINIFLUX_*`) | `docker compose up -d --force-recreate <service>` |
+| `radicale/config` or `radicale/users` (bind-mounted files) | `docker compose restart radicale` |
+| `homepage/*.yaml` | `./start.sh` (substitutes `__HOST__`), then `docker compose restart homepage` |
+| `diun/diun.yml` | `docker compose restart diun` |
+| `docker-compose.yml` (image tag, env list, ports) | `docker compose up -d` |
+
+`docker compose up -d` alone already recreates a container whose *definition* changed.
+`--force-recreate` is for the case where the definition did not change but the value it
+reads (`.env`) did — compose sees no diff, so it leaves the old container alone.
+
 ## 2. Lock down ntfy
 
 Anonymous access is `deny-all`. Grant exactly one topic write-only, so any script
@@ -172,7 +198,7 @@ Add System → WebSocket. Copy **both** values into `.env`:
 - `BESZEL_TOKEN` — enables WebSocket auto-registration.
 
 ```sh
-docker compose up -d beszel-agent
+docker compose up -d --force-recreate beszel-agent   # recreate: it reads .env
 docker logs beszel-agent --tail 20     # should stop complaining about keys
 ```
 
