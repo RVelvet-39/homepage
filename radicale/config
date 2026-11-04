@@ -1,0 +1,22 @@
+[server]
+hosts = 0.0.0.0:5232
+max_connections = 20
+# Caddy terminates TLS and forwards plain HTTP on the internal network.
+# Radicale trusts X-Forwarded-* / X-Script-Name when it sees these headers.
+timeout = 30
+
+[auth]
+type = htpasswd
+htpasswd_filename = /config/users
+# Generated with:  openssl passwd -6 'your-password'   ->  $6$...
+htpasswd_encryption = sha512
+
+[rights]
+# Each user only sees their own collections. Do not switch this to "authenticated".
+type = owner_only
+
+[storage]
+filesystem_folder = /data/collections
+
+[logging]
+level = warning

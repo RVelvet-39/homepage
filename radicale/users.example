@@ -1,0 +1,9 @@
+# Radicale users: one "user:hash" line per person. Format is htpasswd.
+# Copy to `users` (the real file is gitignored so hashes never get committed):
+#   cp radicale/users.example radicale/users
+# Generate a hash line:
+#   printf '%s:%s\n' "you" "$(openssl passwd -6 'your-password')" >> radicale/users
+# Result looks like:
+#   you:$6$rounds=5000$abc...$xyz...
+#
+# An empty file means every login fails — a fresh deploy is closed by default.

@@ -1,0 +1,8 @@
+.env
+data/
+*.log
+*.tar.gz
+
+# Live CalDAV credentials: hashes must never enter git.
+# Template lives in radicale/users.example; start.sh copies it if missing.
+radicale/users

@@ -1,0 +1,13 @@
+- resources:
+    label: Server
+    cpu: true
+    memory: true
+    disk: /
+    uptime: true
+    cputemp: false
+    units: metric
+- datetime:
+    text_size: xl
+    format:
+      timeStyle: short
+      dateStyle: short

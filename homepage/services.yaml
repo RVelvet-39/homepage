@@ -1,0 +1,64 @@
+# URLs assume the tailscale serve mapping in serve.sh.
+# Replace  once, after you know the node's MagicDNS name:
+#   sed -i "s//$TAILNET_HOST/g" homepage/*.yaml
+# `server` maps to an entry in docker.yaml for the status dots.
+
+- Monitoring:
+    - Beszel:
+        href: https://__HOST__:8449
+        description: Host metrics, disk health, alerts
+        icon: si-beszel
+        server: selfhost
+        container: beszel
+    - Uptime Kuma:
+        href: https://__HOST__:8450
+        description: Is it answering, and is the cert valid
+        icon: si-uptimekuma
+        server: selfhost
+        container: uptime-kuma
+    - ntfy:
+        href: https://__HOST__:8448
+        description: Notification bus
+        icon: si-ntfy
+        server: selfhost
+        container: ntfy
+
+- Apps:
+    - Memos:
+        href: https://__HOST__:8443
+        description: Notes
+        icon: si-obsidian
+        server: selfhost
+        container: memos
+    - Linkding:
+        href: https://__HOST__:8444
+        description: Bookmarks
+        icon: si-linkding
+        server: selfhost
+        container: linkding
+        # widget:
+        #   type: linkding
+        #   url: http://linkding:9090
+        #   key: <Linkding > Settings > API token>
+    - Miniflux:
+        href: https://__HOST__:8445
+        description: Feeds
+        icon: si-rss
+        server: selfhost
+        container: miniflux
+        # widget:
+        #   type: miniflux
+        #   url: http://miniflux:8080
+        #   key: <Miniflux > Settings > API Keys>
+    - PrivateBin:
+        href: https://__HOST__:8447
+        description: Zero-knowledge pastebin
+        icon: sh-privatebin
+        server: selfhost
+        container: privatebin
+    - Radicale (CalDAV):
+        href: https://__HOST__:8446
+        description: Calendar + contacts + tasks
+        icon: si-nextcloud
+        server: selfhost
+        container: radicale

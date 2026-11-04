@@ -1,0 +1,25 @@
+# Diun watches image tags and tells you about them. It never pulls into a running
+# container and never restarts anything — that decision stays with you.
+# The notification block is configured by DIUN_NOTIF_* environment variables in
+# compose.yml so the topic lives in .env, not in this file.
+
+db:
+  path: /data/diun.db
+
+watch:
+  # 6-field cron: sec min hour dom mon dow. 04:30 daily.
+  schedule: "0 30 4 * * *"
+  workers: 1
+  runOnStartup: true
+  compareDigest: true
+  # Do not spam on the very first run, when every image is "new".
+  firstCheckNotif: false
+
+providers:
+  docker:
+    endpoint: unix:///var/run/docker.sock
+    watchByDefault: true
+    watchStacks: true
+    # Skip the noise you never upgrade by hand.
+    watchExclude:
+      - "postgres:*"

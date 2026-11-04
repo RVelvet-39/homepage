@@ -1,0 +1,6 @@
+# Container status for the dashboard. Under rootless podman the API carries only
+# your user's privileges, so the socket is mounted directly instead of behind a
+# proxy (the haproxy-based proxies die on a 4096 nofile limit).
+# Key name must match `server:` in services.yaml.
+selfhost:
+  socket: /var/run/docker.sock

@@ -1,0 +1,10 @@
+- Docs:
+    - Homepage:
+        - https://gethomepage.dev
+    - ntfy:
+        - https://docs.ntfy.sh
+- Ops:
+    - Uptime:
+        - https://__HOST__:8450
+    - Serve rules:
+        - https://__HOST__:8449

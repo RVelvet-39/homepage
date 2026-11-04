@@ -1,0 +1,271 @@
+name: selfhost
+
+# Complete stack, tailnet-only. No public DNS, no ACME, no open 80/443.
+#
+#   cp .env.example .env && vi .env     # TAILNET_HOST + passwords
+#   docker compose up -d                # everything, one command
+#   ./serve.sh                          # tailscale serve publishes the URLs
+#
+# Every service binds to 127.0.0.1 only — that is the single form tailscale serve
+# will proxy. Nothing is reachable except from devices on your tailnet.
+# Homepage, Kuma, Diun and the Beszel agent get the container API socket directly:
+# the haproxy-based proxies cannot survive a 4096 nofile limit (see README).
+#
+# No depends_on anywhere on purpose: podman-compose (what `docker compose` is when
+# the docker binary is a podman shim) resolves dependencies by container name and
+# aborts with "not a valid container". Every service has restart: unless-stopped,
+# so start order settles itself within a few seconds.
+#
+# DOCKER_SOCK is the host API socket. Docker Engine: /var/run/docker.sock.
+# Podman rootful: /run/podman/podman.sock. Podman rootless: $XDG_RUNTIME_DIR/podman/podman.sock.
+
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+x-base: &base
+  restart: unless-stopped
+  logging: *logging
+  security_opt:
+    - no-new-privileges:true
+
+# network_mode: host (the Beszel agent) is mutually exclusive with `networks`,
+# so the bridge membership lives in its own anchor that most services merge in.
+x-net: &net
+  networks: [edge]
+
+networks:
+  edge:
+    name: selfhost_edge
+
+volumes:
+  ntfy_cache:
+  ntfy_auth:
+  beszel_data:
+  beszel_agent_data:
+  kuma_data:
+  diun_data:
+  memos_data:
+  radicale_data:
+  linkding_data:
+  miniflux_db:
+  privatebin_data:
+
+services:
+
+  # ───────────────────────── ingress + notification bus ─────────────────────────
+
+  ntfy:
+    <<: [*base, *net]
+    image: binwiederhier/ntfy:v2.37.1
+    container_name: ntfy
+    command: serve
+    ports:
+      - "127.0.0.1:2586:80"
+    environment:
+      NTFY_BASE_URL: https://${TAILNET_HOST}:8448
+      NTFY_LISTEN_HTTP: ":80"
+      NTFY_BEHIND_PROXY: "true"
+      NTFY_CACHE_FILE: /var/cache/ntfy/cache.db
+      NTFY_AUTH_FILE: /var/lib/ntfy/user.db
+      # deny-all: no anonymous reader anywhere. One topic is granted write-only
+      # afterwards (README step 2) so scripts can publish and only you can read.
+      NTFY_AUTH_DEFAULT_ACCESS: "deny-all"
+      # iOS instant push only, and it relays topic names through the vendor:
+      # topics must stay unguessable. Delete this line if you are Android-only.
+      NTFY_UPSTREAM_BASE_URL: https://ntfy.sh
+      TZ: ${TZ:-UTC}
+    volumes:
+      - ntfy_cache:/var/cache/ntfy
+      - ntfy_auth:/var/lib/ntfy
+    mem_limit: 128m
+
+  # ───────────────────────── metrics + liveness + update watch ──────────────────
+
+  beszel:
+    <<: [*base, *net]
+    image: henrygd/beszel:0.21.1
+    container_name: beszel
+    ports:
+      - "127.0.0.1:8090:8090"
+    environment:
+      APP_URL: https://${TAILNET_HOST}:8449
+      # Agents are WebSocket-only; the hub must not try SSH into its sibling.
+      DISABLE_SSH: "true"
+      USER_EMAIL: ${ADMIN_EMAIL:?set ADMIN_EMAIL in .env}
+      USER_PASSWORD: ${BESZEL_ADMIN_PASSWORD:?set BESZEL_ADMIN_PASSWORD in .env}
+      TZ: ${TZ:-UTC}
+    volumes:
+      - beszel_data:/beszel_data
+    mem_limit: 256m
+
+  beszel-agent:
+    <<: *base
+    image: henrygd/beszel-agent:0.21.1
+    container_name: beszel-agent
+    # Host networking on purpose: /proc-based CPU, memory and disk numbers are
+    # wrong behind a bridge, and LISTEN must be reachable on the host.
+    network_mode: host
+    environment:
+      LISTEN: "45876"
+      HUB_URL: http://127.0.0.1:8090
+      # KEY is the hub's public key and it is mandatory: without it the agent
+      # exits immediately with "Failed to load public keys". Copy it from
+      # Beszel -> Add System. TOKEN enables WebSocket auto-registration.
+      KEY: ${BESZEL_KEY:-}
+      TOKEN: ${BESZEL_TOKEN:-}
+      TZ: ${TZ:-UTC}
+    volumes:
+      - ${DOCKER_SOCK:-/var/run/docker.sock}:/var/run/docker.sock:ro
+      - beszel_agent_data:/var/lib/beszel-agent
+    # SMART / disk temperature needs raw device access. Uncomment for it:
+    # privileged: true
+    mem_limit: 256m
+
+  uptime-kuma:
+    <<: *base
+    image: louislam/uptime-kuma:2.5.9
+    container_name: uptime-kuma
+    ports:
+      - "127.0.0.1:3001:3001"
+    environment:
+      DOCKER_HOST: unix:///var/run/docker.sock
+      TZ: ${TZ:-UTC}
+    volumes:
+      - kuma_data:/app/data
+      - ${DOCKER_SOCK:-/var/run/docker.sock}:/var/run/docker.sock:ro
+    mem_limit: 320m
+
+  diun:
+    <<: [*base, *net]
+    image: ghcr.io/crazy-max/diun:4.33.1
+    container_name: diun
+    environment:
+      # Notify-only: Diun never pulls into a running container and never restarts
+      # anything. Unattended auto-updaters turn a bad upstream tag into an outage.
+      DIUN_NOTIF_NTFY_ENDPOINT: http://ntfy:80
+      DIUN_NOTIF_NTFY_TOPIC: ${NTFY_ALERT_TOPIC:?set NTFY_ALERT_TOPIC in .env}
+      DIUN_NOTIF_NTFY_PRIORITY: "3"
+      DIUN_NOTIF_NTFY_TAGS: "whale"
+      TZ: ${TZ:-UTC}
+    volumes:
+      - ./diun/diun.yml:/etc/diun/diun.yml:ro
+      - diun_data:/data
+      - ${DOCKER_SOCK:-/var/run/docker.sock}:/var/run/docker.sock:ro
+    mem_limit: 64m
+
+  # ───────────────────────── dashboard ──────────────────────────────────────────
+
+  homepage:
+    <<: [*base, *net]
+    image: ghcr.io/gethomepage/homepage:v1.4.5
+    container_name: homepage
+    ports:
+      - "127.0.0.1:3000:3000"
+    environment:
+      # Required since v1.0 — every request 400s without the exact hostname.
+      # Served on 443, so no port in the host value.
+      HOMEPAGE_ALLOWED_HOSTS: ${TAILNET_HOST}
+      # Direct socket: rootless podman's API carries only your user's privileges,
+      # not root's, so the extra proxy hop buys little here. See README.
+      DOCKER_HOST: unix:///var/run/docker.sock
+      TZ: ${TZ:-UTC}
+    volumes:
+      - ./homepage:/app/config
+      - ${DOCKER_SOCK:-/var/run/docker.sock}:/var/run/docker.sock:ro
+    mem_limit: 256m
+
+  # ───────────────────────── apps ───────────────────────────────────────────────
+
+  memos:
+    <<: [*base, *net]
+    image: neosmemo/memos:26.11
+    container_name: memos
+    ports:
+      - "127.0.0.1:5230:5230"
+    environment:
+      TZ: ${TZ:-UTC}
+    volumes:
+      - memos_data:/var/opt/memos
+    mem_limit: 256m
+
+  radicale:
+    <<: [*base, *net]
+    image: tomsquest/docker-radicale:3.9.0.0
+    container_name: radicale
+    ports:
+      - "127.0.0.1:5232:5232"
+    environment:
+      TZ: ${TZ:-UTC}
+    volumes:
+      - ./radicale/config:/config/config:ro
+      - ./radicale/users:/config/users:ro
+      - radicale_data:/data
+    mem_limit: 128m
+
+  linkding:
+    <<: [*base, *net]
+    image: sissbruecker/linkding:1.47.0
+    container_name: linkding
+    ports:
+      - "127.0.0.1:9090:9090"
+    environment:
+      LD_SUPERUSER_NAME: ${LINKDING_ADMIN_USER:?set LINKDING_ADMIN_USER in .env}
+      LD_SUPERUSER_PASSWORD: ${LINKDING_ADMIN_PASSWORD:?set LINKDING_ADMIN_PASSWORD in .env}
+      # Django rejects cross-host POSTs; login 403s without this.
+      LD_CSRF_TRUSTED_ORIGINS: https://${TAILNET_HOST}:8444
+      LD_USE_X_FORWARDED_HOST: "true"
+      TZ: ${TZ:-UTC}
+    volumes:
+      - linkding_data:/etc/linkding/data
+    mem_limit: 384m
+
+  miniflux-db:
+    <<: [*base, *net]
+    image: postgres:17-alpine
+    container_name: miniflux-db
+    environment:
+      POSTGRES_USER: miniflux
+      POSTGRES_PASSWORD: ${MINIFLUX_DB_PASSWORD:?set MINIFLUX_DB_PASSWORD in .env}
+      POSTGRES_DB: miniflux
+      TZ: ${TZ:-UTC}
+    volumes:
+      - miniflux_db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U miniflux -d miniflux"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    mem_limit: 256m
+
+  miniflux:
+    <<: [*base, *net]
+    image: miniflux/miniflux:2.3.5
+    container_name: miniflux
+    ports:
+      - "127.0.0.1:8080:8080"
+    environment:
+      DATABASE_URL: postgres://miniflux:${MINIFLUX_DB_PASSWORD}@miniflux-db/miniflux?sslmode=disable
+      RUN_MIGRATIONS: "1"
+      CREATE_ADMIN: "1"
+      ADMIN_USERNAME: ${MINIFLUX_ADMIN_USER:?set MINIFLUX_ADMIN_USER in .env}
+      ADMIN_PASSWORD: ${MINIFLUX_ADMIN_PASSWORD:?set MINIFLUX_ADMIN_PASSWORD in .env}
+      BASE_URL: https://${TAILNET_HOST}:8445
+      TZ: ${TZ:-UTC}
+    mem_limit: 256m
+
+  privatebin:
+    <<: [*base, *net]
+    image: privatebin/nginx-fpm-alpine:2.1.0
+    container_name: privatebin
+    ports:
+      - "127.0.0.1:8081:8080"
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /run
+    volumes:
+      - privatebin_data:/srv/data
+    mem_limit: 128m
