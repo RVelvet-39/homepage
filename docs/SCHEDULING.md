@@ -42,3 +42,39 @@ If intake is missing, the job asks once. It does not invent a day.
   or an intake event in the calendar.
 - **Task source of truth**: calendar VTODO, Memos, or the intake message itself.
 - **Cadence**: one pass per morning, or a week plan revised daily.
+
+## Decisions so far (2026-11-05)
+
+**Task source: Memos.** Notes stay the inbox; the planner reads them instead of a second
+backlog. Needs a Memos access token at `~/.config/memos/token` (mode 600, outside git).
+Convention to be confirmed: memos tagged `#task`, with `- [ ]` lines as open items.
+
+**Reminders: cron, quiet by default.** `scripts/cal.sh remind 15` prints only events
+starting within 15 minutes and records what it already announced in
+`~/.local/state/selfhost/cal-reminded.json`, so a 10-minute tick cannot repeat itself.
+Verified: first call printed `⏰ in 8 min: …`, the second call printed nothing.
+
+**Time zones.** The host clock is UTC and busybox `date` ignores `TZ`; all date math is
+done in Python `zoneinfo` with `CAL_TZ=Asia/Jakarta`. Cron expressions are host-local
+(UTC), so a fixed Jakarta wall-clock time must be converted — prefer intervals (`every
+10m`) for reminders, and (see next point) for the daily plan.
+
+**Daily plan: triggered by Reina, not by a clock.** Her wake time varies, so the plan job
+runs when she says her day started. A cron prompt is a fallback she can set to a time she
+picks, never a fixed 06:30 assumption.
+
+## Calendar helper
+
+`scripts/cal.sh` (wrapper around `scripts/cal.py`, venv at `~/.venvs/caldav`):
+
+```
+cal.sh today
+cal.sh next 30
+cal.sh remind 15
+cal.sh list 7
+cal.sh add "Write docs" 09:00 90      # tagged CATEGORIES:ruko, TRANSP:TRANSPARENT
+cal.sh del <uid> --yes                # deletion refuses without --yes
+```
+
+Verified against the live calendar: add → list → today → remind → del, with the probe
+event removed afterwards.
