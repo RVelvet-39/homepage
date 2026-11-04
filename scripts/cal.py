@@ -7,13 +7,16 @@ Environment overrides:
     CAL_URL    default https://hyacinth.angora-puffin.ts.net:8446/
     CAL_CAL    default /lobelia/schedule/
     CAL_USER   default lobelia
-    CAL_TZ     default Asia/Jakarta
+    CAL_TZ     default Europe/London
 
 Commands:
     today                     events for today
     next [MINUTES]            events starting within N minutes (quiet if none)
+    remind [LEAD]             due-soon events, deduped (quiet cron mode)
     list [DAYS]               next N days (default 7)
-    add SUMMARY START [END|MINUTES]   e.g. add "Write docs" 09:00 90
+    add SUMMARY START [END|MINUTES] [--days mo,we] [--anchor]
+                              e.g. add "Write docs" 09:00 90
+                                   add "Wake" 06:30 30 --days we --anchor
     del UID --yes             delete one event (requires --yes)
 """
 from __future__ import annotations
@@ -31,7 +34,11 @@ URL = os.environ.get("CAL_URL", "https://hyacinth.angora-puffin.ts.net:8446/")
 CAL_PATH = os.environ.get("CAL_CAL", "/lobelia/schedule/")
 USER = os.environ.get("CAL_USER", "lobelia")
 PASS_FILE = Path(os.environ.get("CAL_PASS_FILE", "~/.config/radicale/ruko.pass")).expanduser()
-TZ = ZoneInfo(os.environ.get("CAL_TZ", "Asia/Jakarta"))
+TZ = ZoneInfo(os.environ.get("CAL_TZ", "Europe/London"))
+
+# Weekly recurrence: RRULE BYDAY codes.
+DAYS = {"mo": 0, "tu": 1, "we": 2, "th": 3, "fr": 4, "sa": 5, "su": 6}
+BYDAY = {v: k.upper() for k, v in DAYS.items()}
 
 
 def password() -> str:
@@ -117,19 +124,43 @@ def cmd_list(args):
 
 def cmd_add(args):
     if len(args) < 2:
-        sys.exit('usage: add "SUMMARY" HH:MM [MINUTES|HH:MM]')
+        sys.exit('usage: add "SUMMARY" HH:MM [MINUTES|HH:MM] [--days mo,we] [--anchor]')
     summary = args[0]
     start_t = time.fromisoformat(args[1])
+    rest = args[2:]
+
+    recur_days: list[int] = []
+    anchor = False
+    positional: list[str] = []
+    i = 0
+    while i < len(rest):
+        a = rest[i]
+        if a == "--days" and i + 1 < len(rest):
+            recur_days = [DAYS[d.strip().lower()[:2]] for d in rest[i + 1].split(",") if d.strip()]
+            i += 2
+        elif a == "--anchor":
+            anchor = True
+            i += 1
+        else:
+            positional.append(a)
+            i += 1
+
     now = datetime.now(TZ)
     start = datetime.combine(now.date(), start_t, TZ)
-    if start < now - timedelta(hours=1):
+
+    if recur_days:
+        # first occurrence: the next matching weekday at that time
+        while start.weekday() not in recur_days or start < now - timedelta(minutes=1):
+            start += timedelta(days=1)
+    elif start < now - timedelta(hours=1):
         start += timedelta(days=1)  # past slot means tomorrow
-    if len(args) > 2 and ":" in args[2]:
-        end = datetime.combine(start.date(), time.fromisoformat(args[2]), TZ)
+
+    if positional and ":" in positional[0]:
+        end = datetime.combine(start.date(), time.fromisoformat(positional[0]), TZ)
         if end <= start:
             end += timedelta(days=1)
     else:
-        minutes = int(args[2]) if len(args) > 2 else 60
+        minutes = int(positional[0]) if positional else 60
         end = start + timedelta(minutes=minutes)
 
     ev = Event()
@@ -137,13 +168,20 @@ def cmd_add(args):
     ev.add("dtstart", start)
     ev.add("dtend", end)
     ev.add("categories", ["ruko"])
-    ev.add("transp", "TRANSPARENT")
+    # anchors are real commitments (busy); generated work blocks stay transparent
+    ev.add("transp", "OPAQUE" if anchor else "TRANSPARENT")
+    if recur_days:
+        ev.add("rrule", {"freq": "weekly", "byday": [BYDAY[d] for d in recur_days]})
+
     cal = Calendar()
     cal.add("prodid", "-//ruko//selfhost//EN")
     cal.add("version", "2.0")
     cal.add_component(ev)
     calendar().save_event(cal.to_ical().decode())
-    print(f"added {start.strftime('%Y-%m-%d %H:%M')}-{end.strftime('%H:%M')}  {summary}")
+
+    kind = "anchor" if anchor else "block"
+    when = f"every {','.join(BYDAY[d] for d in recur_days)}" if recur_days else start.strftime("%Y-%m-%d")
+    print(f"added {kind} {when} {start.strftime('%H:%M')}-{end.strftime('%H:%M')}  {summary}")
 
 
 def cmd_del(args):

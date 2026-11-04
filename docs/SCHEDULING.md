@@ -55,8 +55,8 @@ starting within 15 minutes and records what it already announced in
 Verified: first call printed `⏰ in 8 min: …`, the second call printed nothing.
 
 **Time zones.** The host clock is UTC and busybox `date` ignores `TZ`; all date math is
-done in Python `zoneinfo` with `CAL_TZ=Asia/Jakarta`. Cron expressions are host-local
-(UTC), so a fixed Jakarta wall-clock time must be converted — prefer intervals (`every
+done in Python `zoneinfo` with `CAL_TZ=Europe/London` (current region). Cron expressions are host-local
+(UTC), so a fixed London wall-clock time must be converted — prefer intervals (`every
 10m`) for reminders, and (see next point) for the daily plan.
 
 **Daily plan: triggered by Reina, not by a clock.** Her wake time varies, so the plan job
@@ -72,9 +72,20 @@ cal.sh today
 cal.sh next 30
 cal.sh remind 15
 cal.sh list 7
-cal.sh add "Write docs" 09:00 90      # tagged CATEGORIES:ruko, TRANSP:TRANSPARENT
-cal.sh del <uid> --yes                # deletion refuses without --yes
+cal.sh add "Write docs" 09:00 90                  # ruko-tagged, TRANSPARENT
+cal.sh add "Wake" 06:30 30 --days we --anchor     # weekly, TRANSP:OPAQUE
+cal.sh del <uid> --yes                            # deletion refuses without --yes
 ```
 
-Verified against the live calendar: add → list → today → remind → del, with the probe
-event removed afterwards.
+Verified against the live calendar: add → list → today → remind → del, and a recurring
+anchor (`RRULE:FREQ=WEEKLY;BYDAY=WE`, `DTSTART;TZID=Europe/London`, `TRANSP:OPAQUE`) that
+expanded to two Wednesdays before being deleted.
+
+## Standing cron
+
+| Job | Schedule | Mode | Script |
+|---|---|---|---|
+| calendar reminders, 15 min lead | `every 10m` | `no_agent` | `~/.hermes/scripts/cal-remind.sh` → `cal.sh remind 15` |
+
+Empty stdout sends nothing, so it stays quiet unless an event is within 15 minutes.
+Delivery: this Discord thread.
