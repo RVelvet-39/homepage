@@ -9,7 +9,7 @@ timeout = 30
 type = htpasswd
 htpasswd_filename = /config/users
 # Generated with:  openssl passwd -6 'your-password'   ->  $6$...
-htpasswd_encryption = sha512
+htpasswd_encryption = autodetect
 
 [rights]
 # Each user only sees their own collections. Do not switch this to "authenticated".

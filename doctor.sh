@@ -101,6 +101,27 @@ if [ -f homepage/docker.yaml ] && [ -f homepage/services.yaml ]; then
   done
 fi
 
+echo "== radicale auth file"
+if [ ! -e radicale/users ]; then
+  bad "radicale/users missing — start.sh copies the template, but you must add a user line"
+elif [ -d radicale/users ]; then
+  bad "radicale/users is a DIRECTORY (podman created it because the file was absent) — remove it and write a real file"
+else
+  ok "radicale/users exists ($(stat -c '%s bytes, mode %a' radicale/users 2>/dev/null))"
+  users=$(grep -vE '^[[:space:]]*(#|$)' radicale/users 2>/dev/null | cut -d: -f1 | tr '\n' ' ')
+  if [ -z "$users" ]; then
+    bad "no user lines — every login will be rejected (only comments in the file)"
+  else
+    ok "users: $users"
+  fi
+  if grep -q '\r' radicale/users 2>/dev/null; then
+    bad "file has CRLF line endings — trim them or auth fails silently"
+  fi
+  if ! docker exec radicale sh -c 'test -r /config/users' 2>/dev/null; then
+    warn "cannot confirm the container can read /config/users (container stopped? permissions?)"
+  fi
+fi
+
 echo "== beszel agent"
 if ! docker inspect beszel-agent >/dev/null 2>&1; then
   warn "beszel-agent container does not exist yet — docker compose up -d beszel-agent"
