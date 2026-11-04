@@ -101,6 +101,19 @@ if [ -f homepage/docker.yaml ] && [ -f homepage/services.yaml ]; then
   done
 fi
 
+echo "== beszel agent"
+if ! docker inspect beszel-agent >/dev/null 2>&1; then
+  warn "beszel-agent container does not exist yet — docker compose up -d beszel-agent"
+else
+  envs=$(docker inspect beszel-agent --format '{{range .Config.Env}}{{println .}}{{end}}' 2>/dev/null || true)
+  for v in KEY TOKEN HUB_URL; do
+    val=$(printf '%s\n' "$envs" | grep "^$v=" | sed -n '1p' | cut -d= -f2-)
+    if [ -z "$val" ]; then bad "$v is empty in the container — agent refuses to start without KEY"; else ok "$v is set"; fi
+  done
+  echo "  last log lines:"
+  docker logs beszel-agent --tail 5 2>&1 | sed 's/^/    /'
+fi
+
 echo "== tailscale serve"
 if command -v tailscale >/dev/null 2>&1; then
   out=$(tailscale serve status 2>&1 | head -12)
