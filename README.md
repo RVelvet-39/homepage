@@ -96,6 +96,20 @@ guessing which layer broke. The two failures people hit first:
   has an empty host (`https://:8443`) or an unreplaced `__HOST__`. `doctor.sh` prints the
   offending URL under `homepage urls`.
 
+## Accounts (current decision)
+
+One shared Radicale account, username `lobelia`, used by both Reina's devices and Ruko.
+There is no `from_file` rights sharing: with a single account, `rights type = owner_only`
+is exactly right, and everything under `/lobelia/…` is reachable by both.
+
+- Calendar: `https://<TAILNET_HOST>:8446/lobelia/schedule/` (VEVENT + VTODO)
+- Ruko's credential file lives outside this repo: `~/.config/radicale/ruko.pass` (mode 600),
+  never in git and never in chat.
+- Tradeoff accepted with the shared account: no audit trail. Anything Ruko writes carries
+  `CATEGORIES:ruko` so it stays distinguishable from what Reina typed.
+- Revoking Ruko means rotating that password, which also breaks her devices — that is the
+  cost of a single account.
+
 ## 0. Configure (once)
 
 ```sh
