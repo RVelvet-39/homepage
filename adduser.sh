@@ -4,7 +4,8 @@
 #
 #   ./adduser.sh reina
 #
-# Then test:  curl -si -u reina:PASS https://HOST:8446/  ->  expect 207, not 401
+# The tomsquest image installs Radicale into /venv, so the system `python3` has no
+# passlib — this script locates the interpreter that actually has it.
 set -euo pipefail
 cd "$(dirname "$0")"
 
@@ -14,10 +15,23 @@ case "$user" in *:*|*' '*) echo "username must not contain ':' or spaces"; exit 
 
 docker inspect radicale >/dev/null 2>&1 || { echo "radicale container not found — start the stack first"; exit 1; }
 
+# Find the interpreter that can actually import passlib.
+PY=$(docker exec radicale sh -c '
+  for p in /venv/bin/python3 /venv/bin/python /app/venv/bin/python3 python3 python; do
+    [ -x "$p" ] || continue
+    "$p" -c "import passlib" 2>/dev/null && { echo "$p"; exit 0; }
+  done' | tr -d '\r')
+if [ -z "$PY" ]; then
+  echo "no python with passlib found inside the container:"
+  docker exec radicale sh -c 'ls -l /venv/bin 2>/dev/null | head; echo ---; python3 -c "import passlib" 2>&1' || true
+  exit 1
+fi
+echo "using interpreter: $PY"
+
 read -rsp "password for $user: " pass; echo
 [ -n "$pass" ] || { echo "empty password"; exit 2; }
 
-hash=$(docker exec -i radicale python3 - "$pass" <<'PY'
+hash=$(docker exec -i radicale "$PY" - "$pass" <<'PY'
 import sys
 from passlib.hash import sha512_crypt
 print(sha512_crypt.hash(sys.argv[1]))
@@ -32,11 +46,11 @@ printf '%s:%s\n' "$user" "$hash" >> radicale/users.tmp
 mv radicale/users.tmp radicale/users
 chmod 644 radicale/users
 
-echo "wrote $user to radicale/users"
+echo "wrote $user to radicale/users (hash length ${#hash})"
 docker compose restart radicale >/dev/null
 
 # verify with the same library Radicale uses
-if docker exec -i radicale python3 - "$pass" "$hash" <<'PY'
+if docker exec -i radicale "$PY" - "$pass" "$hash" <<'PY'
 import sys
 from passlib.hash import sha512_crypt
 sys.exit(0 if sha512_crypt.verify(sys.argv[1], sys.argv[2]) else 1)
@@ -47,3 +61,6 @@ else
   echo "WARNING: hash did not verify — do not trust this login"
   exit 1
 fi
+
+echo
+echo "test it:  curl -si -u '$user:PASS' https://HOST:8446/ | head -3    (expect 207)"
