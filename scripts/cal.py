@@ -14,7 +14,7 @@ Commands:
     next [MINUTES]            events starting within N minutes (quiet if none)
     remind [LEAD]             due-soon events, deduped (quiet cron mode)
     list [DAYS]               next N days (default 7)
-    add SUMMARY START [END|MINUTES] [--days mo,we] [--until YYYY-MM-DD] [--anchor]
+    add SUMMARY START [END|MINUTES] [--days mo,we] [--until YYYY-MM-DD] [--anchor] [--alarm MIN]
                               e.g. add "Write docs" 09:00 90
                                    add "Class" 09:00 13:30 --days th --until 2027-01-21 --anchor
     del UID --yes             delete one event (requires --yes)
@@ -131,6 +131,7 @@ def cmd_add(args):
 
     recur_days: list[int] = []
     until: str | None = None
+    alarm: int | None = None
     anchor = False
     positional: list[str] = []
     i = 0
@@ -141,6 +142,9 @@ def cmd_add(args):
             i += 2
         elif a == "--until" and i + 1 < len(rest):
             until = rest[i + 1]
+            i += 2
+        elif a == "--alarm" and i + 1 < len(rest):
+            alarm = int(rest[i + 1])
             i += 2
         elif a == "--anchor":
             anchor = True
@@ -174,6 +178,17 @@ def cmd_add(args):
     ev.add("categories", ["ruko"])
     # anchors are real commitments (busy); generated work blocks stay transparent
     ev.add("transp", "OPAQUE" if anchor else "TRANSPARENT")
+    if alarm is not None:
+        # Server-side VALARM: every client that syncs this calendar (phone included)
+        # fires it locally, so reminders survive even when the agent is offline.
+        from datetime import timedelta as _td
+        from icalendar import Alarm
+        al = Alarm()
+        al.add("action", "DISPLAY")
+        al.add("description", summary)
+        al.add("trigger", _td(minutes=-alarm) if alarm > 0 else _td(0))
+        ev.add_component(al)
+
     if recur_days:
         rule: dict = {"freq": "weekly", "byday": [BYDAY[d] for d in recur_days]}
         if until:
