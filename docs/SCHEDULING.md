@@ -22,33 +22,32 @@ If intake is missing, the job asks once. It does not invent a day.
 
 ## Fixed weekly anchors (confirmed by Reina 2026-11-05)
 
-Stated in chat on 2026-11-05, all in `Europe/London`, all written as `TRANSP:OPAQUE` with a
-30-minute `VALARM`:
+Stated in chat on 2026-11-05, all in `Europe/London`, all written as `TRANSP:OPAQUE`.
 
-| Anchor | Days | Time | End | UID |
-|---|---|---|---|---|
-| Bus to school | Mon | 10:30 | 12:30 | `325ae085-0357-4d98-be27-e89b87bc6166` |
-| School (classes) | Mon | 13:30 | 18:00 | `741869d0-ec24-452a-9148-04b119957434` |
-| School | Thu only | 10:30 | 19:00 | `2005c657-5d1f-4f4d-9616-b50965dc46d8` |
-| Work (Saturday shift) | Sat | 11:00 | 22:00 | `e43c7324-4386-4756-adc7-c21b200d1ffc` |
-| Work (Sunday shift) | Sun | 11:00 | 20:00 | `6a5ef780-fdd5-4806-84a2-cff8f83f09c2` |
+| Anchor | Days | Time | End | Alarm | UID |
+|---|---|---|---|---|---|
+| Bus to school | Mon | 10:30 | 12:30 | 30 min | `325ae085-0357-4d98-be27-e89b87bc6166` |
+| School (classes) | Mon | 13:30 | 18:00 | 30 min | `741869d0-ec24-452a-9148-04b119957434` |
+| Bus home | Mon | 18:00 | 20:00 | 10 min | `d24ae340-9cc3-468e-8fe8-5780bc9760ee` |
+| Wake | Thu | 06:30 | 06:50 | 0 min | `3099192a-a8b9-4002-867d-37325d08f3b1` |
+| Bus | Thu | 06:50 | 08:50 | 10 min | `44cdcf1f-0bb7-428a-8c22-c936ba9001c0` |
+| Class | Thu | 09:00 | 13:30 | 10 min | `fda08072-61d6-47fc-860d-636d6545158a` |
+| Bus home | Thu | 13:30 | 15:30 | 10 min | `30faf0f1-56ef-4fe0-aa6d-62b034172e80` |
+| Work (Saturday shift) | Sat | 11:00 | 22:00 | 30 min | `e43c7324-4386-4756-adc7-c21b200d1ffc` |
+| Work (Sunday shift) | Sun | 11:00 | 20:00 | 30 min | `6a5ef780-fdd5-4806-84a2-cff8f83f09c2` |
 
-- **Monday is not one block**, and it has been corrected twice on 2026-11-05: classes are
-  **13:30–18:00**, not to 19:00. The bus row is **still in dispute** — Reina then said "bus starts
-  and ends at 7:30", which contradicts the 10:30–12:30 bus event currently on the calendar. Do not
-  treat that bus event or any Monday gap before 13:30 as confirmed until she resolves it in words.
-- **School is Monday and Thursday only** (Reina, 2026-11-05: "only monday and thursday should be
-  school only"). Tuesday, Wednesday and Friday are free of school; do not re-add a Mon–Thu block.
-- School has **no `UNTIL`** — Reina does not know the term end, so it recurs open-ended and must be
-  re-confirmed, not assumed to have stopped.
-- **Tuesday, Wednesday and Friday carry no anchor** — they are the only study-capable days, with
-  Monday from 18:00 and Thursday from 19:00 as evening edges.
-- The Thursday `Wake` / `Bus` / `Class` routine (06:30 / 06:50–08:50 / 09:00–13:30) is **left exactly
-  as it is** on Reina's explicit instruction ("don't touch thursday"). It still overlaps the Thursday
-  School block; do not reconcile or delete it without a fresh instruction from her.
-- Consequence: the "working hours are not fixed" principle below still governs *daily* planning, but
-  the weekly shape is now largely fixed, so study blocks belong on Tue/Wed/Fri first and only then
-  on the Monday/Thursday evening edges.
+- **School is Monday only.** The Thursday `School` block was added and then removed the same day at her
+  instruction; Thursday is her pre-existing `Class` 09:00–13:30 routine, which stays untouched.
+- **Monday has three moving parts**, corrected three times on 2026-11-05: bus out, classes 13:30–18:00
+  (not to 19:00), bus home. Each is its own event; a single 10:30–19:00 block hides both real gaps.
+- **The Monday outbound bus time is still unresolved.** She said the bus "starts and ends at 7:30" but
+  also that 10:30–12:30 is the time spent on the bus. The event currently holds 10:30–12:30. Both
+  return legs were written as 2 h because 2 h is the only ride length she has confirmed (10:30–12:30
+  and 06:50–08:50). Do not treat the Monday outbound or the return lengths as verified.
+- School and class have **no `UNTIL`** — she does not know when term ends, so they recur open-ended and
+  must be re-confirmed, never assumed to have stopped.
+- **Tuesday, Wednesday and Friday carry no anchor** — they are the only study-capable days; Monday and
+  Thursday end at 20:00 and 15:30 respectively, so their evenings are edges, not full blocks.
 
 ## What gets produced
 
