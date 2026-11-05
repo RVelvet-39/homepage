@@ -41,12 +41,14 @@ Stated in chat on 2026-11-05, all in `Europe/London`, all written as `TRANSP:OPA
   school only"). Tuesday, Wednesday and Friday are free of school; do not re-add a Mon–Thu block.
 - School has **no `UNTIL`** — Reina does not know the term end, so it recurs open-ended and must be
   re-confirmed, not assumed to have stopped.
-- Friday is the only weekday with no recurring anchor stated so far.
+- **Tuesday, Wednesday and Friday carry no anchor** — they are the only study-capable days, with
+  Monday from 18:00 and Thursday from 19:00 as evening edges.
 - The Thursday `Wake` / `Bus` / `Class` routine (06:30 / 06:50–08:50 / 09:00–13:30) is **left exactly
   as it is** on Reina's explicit instruction ("don't touch thursday"). It still overlaps the Thursday
   School block; do not reconcile or delete it without a fresh instruction from her.
 - Consequence: the "working hours are not fixed" principle below still governs *daily* planning, but
-  the weekly shape is now largely fixed, so any study block has to fit Friday or the edges of the day.
+  the weekly shape is now largely fixed, so study blocks belong on Tue/Wed/Fri first and only then
+  on the Monday/Thursday evening edges.
 
 ## What gets produced
 
