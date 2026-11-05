@@ -1,64 +1,60 @@
-# URLs assume the tailscale serve mapping in serve.sh.
-# Replace  once, after you know the node's MagicDNS name:
-#   sed -i "s//$TAILNET_HOST/g" homepage/*.yaml
+# URLs assume the tailscale serve port map in serve.sh (443/8443–8450).
+# Icons come from homarr-labs/dashboard-icons (verified reachable); the `si-` short
+# names earlier were not all valid, which is why several tiles showed no logo.
 # `server` maps to an entry in docker.yaml for the status dots.
-
-- Monitoring:
-    - Beszel:
-        href: https://__HOST__:8449
-        description: Host metrics, disk health, alerts
-        icon: si-beszel
-        server: selfhost
-        container: beszel
-    - Uptime Kuma:
-        href: https://__HOST__:8450
-        description: Is it answering, and is the cert valid
-        icon: si-uptimekuma
-        server: selfhost
-        container: uptime-kuma
-    - ntfy:
-        href: https://__HOST__:8448
-        description: Notification bus
-        icon: si-ntfy
-        server: selfhost
-        container: ntfy
 
 - Apps:
     - Memos:
         href: https://__HOST__:8443
-        description: Notes
-        icon: si-obsidian
+        description: Notes and task inbox
+        icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/memos.png
         server: selfhost
         container: memos
+    - Radicale:
+        href: https://__HOST__:8446
+        description: Calendar, contacts, tasks (DAV)
+        icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/radicale.png
+        server: selfhost
+        container: radicale
+    - Miniflux:
+        href: https://__HOST__:8445
+        description: Feeds
+        icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/miniflux.png
+        server: selfhost
+        container: miniflux
     - Linkding:
         href: https://__HOST__:8444
         description: Bookmarks
-        icon: si-linkding
+        icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/linkding.png
         server: selfhost
         container: linkding
         # widget:
         #   type: linkding
         #   url: http://linkding:9090
-        #   key: <Linkding > Settings > API token>
-    - Miniflux:
-        href: https://__HOST__:8445
-        description: Feeds
-        icon: si-rss
-        server: selfhost
-        container: miniflux
-        # widget:
-        #   type: miniflux
-        #   url: http://miniflux:8080
-        #   key: <Miniflux > Settings > API Keys>
+        #   key: <Linkding -> Settings -> API token>
     - PrivateBin:
         href: https://__HOST__:8447
-        description: Zero-knowledge pastebin
-        icon: sh-privatebin
+        description: Encrypted pastebin
+        icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/privatebin.png
         server: selfhost
         container: privatebin
-    - Radicale (CalDAV):
-        href: https://__HOST__:8446
-        description: Calendar + contacts + tasks
-        icon: si-nextcloud
+
+- Monitoring:
+    - Uptime Kuma:
+        href: https://__HOST__:8450
+        description: Liveness and certificate expiry
+        icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/uptime-kuma.png
         server: selfhost
-        container: radicale
+        container: uptime-kuma
+    - Beszel:
+        href: https://__HOST__:8449
+        description: Host metrics, disk health
+        icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/beszel.png
+        server: selfhost
+        container: beszel
+    - ntfy:
+        href: https://__HOST__:8448
+        description: Notification bus
+        icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/ntfy.png
+        server: selfhost
+        container: ntfy
