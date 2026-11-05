@@ -14,9 +14,9 @@ Commands:
     next [MINUTES]            events starting within N minutes (quiet if none)
     remind [LEAD]             due-soon events, deduped (quiet cron mode)
     list [DAYS]               next N days (default 7)
-    add SUMMARY START [END|MINUTES] [--days mo,we] [--anchor]
+    add SUMMARY START [END|MINUTES] [--days mo,we] [--until YYYY-MM-DD] [--anchor]
                               e.g. add "Write docs" 09:00 90
-                                   add "Wake" 06:30 30 --days we --anchor
+                                   add "Class" 09:00 13:30 --days th --until 2027-01-21 --anchor
     del UID --yes             delete one event (requires --yes)
 """
 from __future__ import annotations
@@ -130,6 +130,7 @@ def cmd_add(args):
     rest = args[2:]
 
     recur_days: list[int] = []
+    until: str | None = None
     anchor = False
     positional: list[str] = []
     i = 0
@@ -137,6 +138,9 @@ def cmd_add(args):
         a = rest[i]
         if a == "--days" and i + 1 < len(rest):
             recur_days = [DAYS[d.strip().lower()[:2]] for d in rest[i + 1].split(",") if d.strip()]
+            i += 2
+        elif a == "--until" and i + 1 < len(rest):
+            until = rest[i + 1]
             i += 2
         elif a == "--anchor":
             anchor = True
@@ -171,7 +175,13 @@ def cmd_add(args):
     # anchors are real commitments (busy); generated work blocks stay transparent
     ev.add("transp", "OPAQUE" if anchor else "TRANSPARENT")
     if recur_days:
-        ev.add("rrule", {"freq": "weekly", "byday": [BYDAY[d] for d in recur_days]})
+        rule: dict = {"freq": "weekly", "byday": [BYDAY[d] for d in recur_days]}
+        if until:
+            # UNTIL must be UTC for timed events; cover the whole final day
+            u = datetime.strptime(until, "%Y-%m-%d").replace(
+                hour=23, minute=59, second=59, tzinfo=ZoneInfo("UTC"))
+            rule["until"] = u
+        ev.add("rrule", rule)
 
     cal = Calendar()
     cal.add("prodid", "-//ruko//selfhost//EN")
@@ -181,6 +191,8 @@ def cmd_add(args):
 
     kind = "anchor" if anchor else "block"
     when = f"every {','.join(BYDAY[d] for d in recur_days)}" if recur_days else start.strftime("%Y-%m-%d")
+    if recur_days and until:
+        when += f" until {until}"
     print(f"added {kind} {when} {start.strftime('%H:%M')}-{end.strftime('%H:%M')}  {summary}")
 
 
