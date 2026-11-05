@@ -83,9 +83,22 @@ expanded to two Wednesdays before being deleted.
 
 ## Standing cron
 
-| Job | Schedule | Mode | Script |
-|---|---|---|---|
-| calendar reminders, 15 min lead | `every 10m` | `no_agent` | `~/.hermes/scripts/cal-remind.sh` → `cal.sh remind 15` |
+| Job | Schedule | Mode | Script | State |
+|---|---|---|---|---|
+| calendar reminders, 15 min lead (`f848123e6379`) | `every 10m` | `no_agent` | `~/.hermes/scripts/cal-remind.sh` → `cal.sh remind 15` | **paused 2026-11-05** |
 
 Empty stdout sends nothing, so it stays quiet unless an event is within 15 minutes.
-Delivery: this Discord thread.
+Delivery: the Discord thread.
+
+**Paused** because events now carry server-side `VALARM` (`--alarm`), which the phone's
+calendar app fires locally through DAVx5 — the Discord ping duplicated it. Resume with
+`cronjob_manage action=resume job_id=f848123e6379` if phone sync is unavailable or for
+blocks created ad-hoc during a plan run. It did fire on schedule while enabled
+(last run 08:41, status ok).
+
+## Alarms
+
+`cal.sh add … --alarm N` writes `ACTION:DISPLAY` + `TRIGGER:-PT<N>M` inside the event, so
+the alert belongs to the event, not to this agent. Applied to the Thursday routine: Wake
+at 0 min, Bus 10 min, Class 10 min. Requires a phone calendar app that syncs the DAVx5
+account *and* has notifications enabled — Android calendars are silent by default.
