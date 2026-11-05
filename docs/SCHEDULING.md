@@ -20,6 +20,26 @@ The planner needs three things, in any order:
 
 If intake is missing, the job asks once. It does not invent a day.
 
+## Fixed weekly anchors (confirmed by Reina 2026-11-05)
+
+Stated in chat on 2026-11-05, all in `Europe/London`, all written as `TRANSP:OPAQUE` with a
+30-minute `VALARM`:
+
+| Anchor | Days | Time | End | UID |
+|---|---|---|---|---|
+| School | Mon–Thu | 10:30 | 19:00 | `aaf78652-12c5-480d-8a59-ec2cfdb43709` |
+| Work (Saturday shift) | Sat | 11:00 | 22:00 | `e43c7324-4386-4756-adc7-c21b200d1ffc` |
+| Work (Sunday shift) | Sun | 11:00 | 20:00 | `6a5ef780-fdd5-4806-84a2-cff8f83f09c2` |
+
+- School has **no `UNTIL`** — Reina does not know the term end, so it recurs open-ended and must be
+  re-confirmed, not assumed to have stopped.
+- Friday is the only weekday with no recurring anchor stated so far.
+- Stale against this: the Thursday `Wake` / `Bus` / `Class` routine (06:30 / 06:50–08:50 /
+  09:00–13:30) now overlaps School. Reina said the class is "on hold"; the events were left in place
+  pending her decision, not deleted.
+- Consequence: the "working hours are not fixed" principle below still governs *daily* planning, but
+  the weekly shape is now largely fixed, so any study block has to fit Friday or the edges of the day.
+
 ## What gets produced
 
 - Events in `/lobelia/schedule/`, each tagged `CATEGORIES:ruko` and `TRANSP:TRANSPARENT`
