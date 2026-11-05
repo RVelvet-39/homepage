@@ -63,10 +63,13 @@ def all_memos(limit_pages: int = 5) -> list[dict]:
 
 
 def cmd_health(_args=()):
-    me = api("/api/users/me")
+    # /api/auth/me is the identity route; /api/users/me treats "me" as a username
+    # and answers 404 {"code":5,"message":"user not found"} even with a valid token.
+    me = api("/api/auth/me")
+    user = (me or {}).get("user", {})
     memos = all_memos()
     print(f"base      : {BASE}")
-    print(f"identity  : {json.dumps(me)[:160]}")
+    print(f"identity  : {user.get('username','?')} ({user.get('role','?')}, created {user.get('createTime','?')})")
     print(f"memos     : {len(memos)}")
     if memos:
         m = memos[0]
@@ -79,6 +82,11 @@ def cmd_tasks(args):
     found = 0
     for m in memos:
         content = str(m.get("content", ""))
+        prop = m.get("property") or {}
+        # Memos computes this server-side; trust it over our own guessing.
+        if prop.get("hasIncompleteTasks") is False and not CHECKBOX_OPEN.search(content):
+            if not (show_done and CHECKBOX_DONE.search(content)):
+                continue
         lines = content.splitlines()
         open_items, done_items = [], []
         for ln in lines:
