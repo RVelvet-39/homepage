@@ -29,7 +29,7 @@ Stated in chat on 2026-11-05, all in `Europe/London`, all written as `TRANSP:OPA
 |---|---|---|---|---|
 | Bus to school | Mon | 10:30 | 12:30 | `325ae085-0357-4d98-be27-e89b87bc6166` |
 | School (classes) | Mon | 13:30 | 18:00 | `741869d0-ec24-452a-9148-04b119957434` |
-| School | Tue, Wed, Thu | 10:30 | 19:00 | `b4e6e0af-a69f-43f4-8577-d6f896a12668` |
+| School | Thu only | 10:30 | 19:00 | `2005c657-5d1f-4f4d-9616-b50965dc46d8` |
 | Work (Saturday shift) | Sat | 11:00 | 22:00 | `e43c7324-4386-4756-adc7-c21b200d1ffc` |
 | Work (Sunday shift) | Sun | 11:00 | 20:00 | `6a5ef780-fdd5-4806-84a2-cff8f83f09c2` |
 
@@ -37,6 +37,8 @@ Stated in chat on 2026-11-05, all in `Europe/London`, all written as `TRANSP:OPA
   **13:30–18:00**, not to 19:00. The bus row is **still in dispute** — Reina then said "bus starts
   and ends at 7:30", which contradicts the 10:30–12:30 bus event currently on the calendar. Do not
   treat that bus event or any Monday gap before 13:30 as confirmed until she resolves it in words.
+- **School is Monday and Thursday only** (Reina, 2026-11-05: "only monday and thursday should be
+  school only"). Tuesday, Wednesday and Friday are free of school; do not re-add a Mon–Thu block.
 - School has **no `UNTIL`** — Reina does not know the term end, so it recurs open-ended and must be
   re-confirmed, not assumed to have stopped.
 - Friday is the only weekday with no recurring anchor stated so far.
