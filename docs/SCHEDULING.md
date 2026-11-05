@@ -27,16 +27,21 @@ Stated in chat on 2026-11-05, all in `Europe/London`, all written as `TRANSP:OPA
 
 | Anchor | Days | Time | End | UID |
 |---|---|---|---|---|
-| School | Mon–Thu | 10:30 | 19:00 | `aaf78652-12c5-480d-8a59-ec2cfdb43709` |
+| Bus to school | Mon | 10:30 | 12:30 | `325ae085-0357-4d98-be27-e89b87bc6166` |
+| School (classes) | Mon | 13:30 | 19:00 | `4af5e7c1-564f-490c-842c-7329c3141f01` |
+| School | Tue, Wed, Thu | 10:30 | 19:00 | `b4e6e0af-a69f-43f4-8577-d6f896a12668` |
 | Work (Saturday shift) | Sat | 11:00 | 22:00 | `e43c7324-4386-4756-adc7-c21b200d1ffc` |
 | Work (Sunday shift) | Sun | 11:00 | 20:00 | `6a5ef780-fdd5-4806-84a2-cff8f83f09c2` |
 
+- **Monday is not one block.** Reina corrected it 2026-11-05: 10:30–12:30 is the bus, classes
+  start 13:30 and run to 19:00, with 12:30–13:30 unbooked on campus. A single 10:30–19:00 Monday
+  block would have overstated study-free time and hidden the real gap.
 - School has **no `UNTIL`** — Reina does not know the term end, so it recurs open-ended and must be
   re-confirmed, not assumed to have stopped.
 - Friday is the only weekday with no recurring anchor stated so far.
-- Stale against this: the Thursday `Wake` / `Bus` / `Class` routine (06:30 / 06:50–08:50 /
-  09:00–13:30) now overlaps School. Reina said the class is "on hold"; the events were left in place
-  pending her decision, not deleted.
+- The Thursday `Wake` / `Bus` / `Class` routine (06:30 / 06:50–08:50 / 09:00–13:30) is **left exactly
+  as it is** on Reina's explicit instruction ("don't touch thursday"). It still overlaps the Thursday
+  School block; do not reconcile or delete it without a fresh instruction from her.
 - Consequence: the "working hours are not fixed" principle below still governs *daily* planning, but
   the weekly shape is now largely fixed, so any study block has to fit Friday or the edges of the day.
 
