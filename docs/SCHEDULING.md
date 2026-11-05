@@ -40,10 +40,10 @@ Stated in chat on 2026-11-05, all in `Europe/London`, all written as `TRANSP:OPA
   instruction; Thursday is her pre-existing `Class` 09:00–13:30 routine, which stays untouched.
 - **Monday has three moving parts**, corrected three times on 2026-11-05: bus out, classes 13:30–18:00
   (not to 19:00), bus home. Each is its own event; a single 10:30–19:00 block hides both real gaps.
-- **The Monday outbound bus time is still unresolved.** She said the bus "starts and ends at 7:30" but
-  also that 10:30–12:30 is the time spent on the bus. The event currently holds 10:30–12:30. Both
-  return legs were written as 2 h because 2 h is the only ride length she has confirmed (10:30–12:30
-  and 06:50–08:50). Do not treat the Monday outbound or the return lengths as verified.
+- **Monday outbound bus: 10:30–12:30, confirmed 2026-11-05.** An earlier "bus starts and ends at 7:30"
+  was superseded when she answered the direct question with "10:30". The event was already correct and
+  needed no edit. Both return legs are 2 h on the strength of the two confirmed ride lengths
+  (10:30–12:30 and 06:50–08:50); the return length is still an inference, not a stated fact.
 - School and class have **no `UNTIL`** — she does not know when term ends, so they recur open-ended and
   must be re-confirmed, never assumed to have stopped.
 - **Tuesday, Wednesday and Friday carry no anchor** — they are the only study-capable days; Monday and
